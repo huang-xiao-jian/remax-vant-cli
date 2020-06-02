@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "jsx": "preserve",
+    "rootDir": "lib",
+    "baseUrl": "./",
+    "lib": ["ES2015"]
+  },
+  "include": ["typings/**/*", "lib/**/*"]
+}
