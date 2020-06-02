@@ -63,6 +63,8 @@ export default () => {
 };
 `;
 
+const directory = process.cwd();
+
 program
   .version('0.1.0')
   .command('create <component>')
@@ -72,15 +74,15 @@ program
     const name = pascalCase(component);
     const files = [
       {
-        filename: path.resolve(__dirname, `../packages/${name}/index.ts`),
+        filename: path.resolve(directory, `packages/${name}/index.ts`),
         content: renderIndex(name),
       },
       {
-        filename: path.resolve(__dirname, `../packages/${name}/${name}.tsx`),
+        filename: path.resolve(directory, `packages/${name}/${name}.tsx`),
         content: renderComponent(name),
       },
       {
-        filename: path.resolve(__dirname, `../packages/${name}/${name}.css`),
+        filename: path.resolve(directory, `packages/${name}/${name}.css`),
         content: '',
       },
     ];
@@ -89,8 +91,8 @@ program
     if (!option.ignorePage) {
       files.push({
         filename: path.resolve(
-          __dirname,
-          `../public/pages/${component}/index.tsx`
+          directory,
+          `public/pages/${component}/index.tsx`
         ),
         content: renderPage(name),
       });
