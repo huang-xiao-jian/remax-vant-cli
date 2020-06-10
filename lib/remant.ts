@@ -32,6 +32,9 @@ interface Exogenous${name}Props {
 
 type ${name}Props = Neutral${name}Props & Exogenous${name}Props;
 
+// scope
+const Default${name}Props: Neutral${name}Props = {};
+
 const ${name}: FunctionComponent<${name}Props> = (props) => {
   const { className, children } = props;
   const classnames = {
@@ -46,7 +49,7 @@ export default ${name};
 
 const renderPage = (name: string) => `
 // packages
-import * as React from 'react';
+import React from 'react';
 import { View, Text } from 'remax/wechat';
 
 // internal
