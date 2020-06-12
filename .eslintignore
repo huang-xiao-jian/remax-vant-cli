@@ -82,3 +82,6 @@ typings/
 dist
 build
 bin
+
+# Configuration
+jest.config.js
