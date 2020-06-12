@@ -1,0 +1,91 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`create new component should render component template with default props 1`] = `
+"// packages
+import React, { FunctionComponent } from 'react';
+import clsx from 'clsx';
+import { View } from 'remax/wechat';
+// internal
+import withDefaultProps from '../tools/with-default-props-advance';
+import './Rate.css';
+
+// 默认值填充属性
+interface NeutralRateProps {}
+
+interface ExogenousRateProps {
+  // 容器类名，用以覆盖内部
+  className?: string;
+}
+
+type RateProps = NeutralRateProps & ExogenousRateProps;
+
+// scope
+const DefaultRateProps: NeutralRateProps = {};
+
+const Rate: FunctionComponent<RateProps> = (props) => {
+  const { className, children } = props;
+  const classnames = {
+    container: clsx(className),
+  };
+
+  return <View className={classnames.container}>{children}</View>;
+};
+
+export default withDefaultProps<ExogenousRateProps, NeutralRateProps>(
+  DefaultRateProps
+)(Rate);
+"
+`;
+
+exports[`create new component should render component template without default props 1`] = `
+"// packages
+import React, { FunctionComponent } from 'react';
+import clsx from 'clsx';
+import { View } from 'remax/wechat';
+// internal
+import './Rate.css';
+
+interface RateProps {
+  // 容器类名，用以覆盖内部
+  className?: string;
+}
+
+const Rate: FunctionComponent<RateProps> = (props) => {
+  const { className, children } = props;
+  const classnames = {
+    container: clsx(className),
+  };
+
+  return <View className={classnames.container}>{children}</View>;
+};
+
+export default Rate;
+"
+`;
+
+exports[`create new component should render default export 1`] = `
+"/**
+ * @description - nothing but export component
+ */
+export { default } from './Rate';
+"
+`;
+
+exports[`create new component should render page template 1`] = `
+"// packages
+import React from 'react';
+import { View, Text } from 'remax/wechat';
+
+// internal
+import Rate from '../../../packages/Rate';
+
+export default () => {
+  return (
+    <View className=\\"demo-block\\">
+      <Text className=\\"demo-block__title\\">基础用法</Text>
+      <View className=\\"demo-block__content\\"></View>
+    </View>
+  );
+};
+"
+`;
