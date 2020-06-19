@@ -10,5 +10,5 @@
     "baseUrl": "./",
     "lib": ["ES2015"]
   },
-  "include": ["typings/**/*", "lib/**/*.ts", "__tests__/**/*.ts"]
+  "include": ["typings/**/*", "src/**/*.ts", "__tests__/**/*.spec.ts"]
 }

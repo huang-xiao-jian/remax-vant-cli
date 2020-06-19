@@ -18,3 +18,4 @@ globals:
   SharedArrayBuffer: readonly
 rules:
   '@typescript-eslint/camelcase': off
+  'import/prefer-default-export': off
