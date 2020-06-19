@@ -31,9 +31,7 @@ const Rate: FunctionComponent<RateProps> = (props) => {
   return <View className={classnames.container}>{children}</View>;
 };
 
-export default withDefaultProps<ExogenousRateProps, NeutralRateProps>(
-  DefaultRateProps
-)(Rate);
+export default withDefaultProps<ExogenousRateProps, NeutralRateProps>(DefaultRateProps)(Rate);
 "
 `;
 
@@ -64,10 +62,10 @@ export default Rate;
 `;
 
 exports[`create new component should render default export 1`] = `
-"/**
- * @description - nothing but export component
- */
-export { default } from './Rate';
+"  /**
+   * @description - nothing but export component
+   */
+  export { default } from './Rate';
 "
 `;
 
@@ -83,7 +81,8 @@ export default () => {
   return (
     <View className=\\"demo-block\\">
       <Text className=\\"demo-block__title\\">基础用法</Text>
-      <View className=\\"demo-block__content\\"></View>
+      <View className=\\"demo-block__content\\">
+      </View>
     </View>
   );
 };
