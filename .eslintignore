@@ -81,7 +81,7 @@ typings/
 # Production
 dist
 build
-bin
+lib
 
 # Configuration
 jest.config.js
