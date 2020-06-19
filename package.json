@@ -20,7 +20,8 @@
     "prepublishOnly": "yarn compile"
   },
   "files": [
-    "bin"
+    "bin",
+    "lib"
   ],
   "dependencies": {
     "camelcase": "^6.0.0",
