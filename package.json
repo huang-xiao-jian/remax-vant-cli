@@ -24,15 +24,16 @@
     "lib"
   ],
   "dependencies": {
+    "@remax/types": "^2.5.3",
     "camelcase": "^6.0.0",
     "chalk": "^4.0.0",
+    "cli-cursor": "^3.1.0",
     "commander": "^5.1.0",
     "fs-extra": "^9.0.0",
     "handlebars": "^4.7.6",
     "node-emoji": "^1.10.0",
     "pascal-case": "^3.1.1",
-    "prompts": "^2.3.2",
-    "@remax/types": "^2.5.3"
+    "prompts": "^2.3.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.10.1",
@@ -73,5 +74,8 @@
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
+  },
+  "peerDependencies": {
+    "remax": "^2.5.5"
   }
 }

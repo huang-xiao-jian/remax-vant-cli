@@ -8,6 +8,9 @@ import { readdirSync, readFileSync, readJSONSync, writeFileSync } from 'fs-extra
 import { get } from 'node-emoji';
 import { EventEmitter } from 'events';
 import { stdin } from 'process';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { compilation as _compilation } from 'webpack';
+import * as cursor from 'cli-cursor';
 // internal
 import { cleanup } from './worker';
 import { Pages } from './constant';
@@ -84,15 +87,32 @@ export class RemaxVantRocket {
     // 渲染配置文件
     this.eventEmitter.on(RocketAction.Render, () => this.render());
 
-    // 进入交互模式
-    this.eventEmitter.on(RocketAction.TakeOver, () => this.takeOver());
-
     // 退出交互模式
     this.eventEmitter.on(RocketAction.Pristine, () => {
       // clear shell log
       console.clear();
+      // 隐藏光标
+      cursor.hide();
+
       // avoid redundant execution
       stdin.off('data', this.interact);
+    });
+
+    // 进入交互模式
+    this.eventEmitter.on(RocketAction.TakeOver, () => {
+      const commands = [
+        `\n${get('ghost')} ${chalk.cyan(' Remant Usage:')}\n`,
+        `${get('zany_face')} Press ${chalk.magenta('P')} to list pages concerned`,
+        `${get('heart_eyes')} Press ${chalk.magenta('F')} to mark initial page`,
+        `${get('beer')} Press ${chalk.magenta('Q')} to quick focus board`,
+      ];
+      // 隐藏光标
+      cursor.hide();
+      console.log(commands.join('\n'));
+
+      stdin.setRawMode(true);
+      stdin.resume();
+      stdin.on('data', (data: Buffer) => this.interact(data));
     });
 
     // 退出程序
@@ -177,20 +197,6 @@ export class RemaxVantRocket {
     this.eventEmitter.emit(RocketAction.Watch);
   }
 
-  takeOver() {
-    const commands = [
-      `\n${get('ghost')} ${chalk.cyan(' Remant Usage:')}\n`,
-      `${get('zany_face')} Press ${chalk.magenta('P')} to list pages concerned`,
-      `${get('heart_eyes')} Press ${chalk.magenta('F')} to mark initial page`,
-      `${get('beer')} Press ${chalk.magenta('Q')} to quick focus board`,
-    ];
-    console.log(commands.join('\n'));
-
-    stdin.setRawMode(true);
-    stdin.resume();
-    stdin.on('data', (data: Buffer) => this.interact(data));
-  }
-
   // 交互模式
   interact(data: Buffer) {
     const input = String(data);
@@ -224,24 +230,27 @@ export class RemaxVantRocket {
       watch: true,
     });
 
-    compiler.hooks.afterEmit.tap('PruneHarmfulPages', (compilation) => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const asset = compilation.getAsset('app.json') as Asset;
-      const manifest = readJSONSync(asset.source.existsAt) as Manifest;
-      const pages = manifest.pages.map((pagepath) => pagepath.split('/')[1]);
-      // 输出 pages 目录
-      const outputPath = compiler.options.output?.path as string;
-      const directories = readdirSync(path.resolve(outputPath, './pages'));
+    compiler.hooks.afterEmit.tap(
+      'PruneHarmfulPages',
+      (compilation: _compilation.Compilation) => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const asset = compilation.getAsset('app.json') as Asset;
+        const manifest = readJSONSync(asset.source.existsAt) as Manifest;
+        const pages = manifest.pages.map((pagepath) => pagepath.split('/')[1]);
+        // 输出 pages 目录
+        const outputPath = compiler.options.output?.path as string;
+        const directories = readdirSync(path.resolve(outputPath, './pages'));
 
-      directories
-        .filter((dirname) => !pages.includes(dirname))
-        .forEach((dirname) => {
-          cleanup(outputPath, dirname);
-        });
+        directories
+          .filter((dirname) => !pages.includes(dirname))
+          .forEach((dirname) => {
+            cleanup(outputPath, dirname);
+          });
 
-      // 回传信号
-      this.eventEmitter.emit(RocketAction.TakeOver);
-    });
+        // 回传信号
+        this.eventEmitter.emit(RocketAction.TakeOver);
+      }
+    );
   }
 }
