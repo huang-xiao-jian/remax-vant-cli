@@ -59,7 +59,7 @@ export function create(component: string, options: CreateCommandOptions): void {
   // several component without page preview
   if (!options.ignorePage) {
     files.push({
-      filename: path.resolve(directory, `public/pages/${component}/index.tsx`),
+      filename: path.resolve(directory, `storyboard/pages/${component}/index.tsx`),
       content: render(RenderType.PAGE, name, options),
     });
   }
