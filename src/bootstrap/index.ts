@@ -9,7 +9,6 @@ import { get } from 'node-emoji';
 import { EventEmitter } from 'events';
 import { stdin } from 'process';
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { compilation as _compilation } from 'webpack';
 import * as cursor from 'cli-cursor';
 // internal
 import { cleanup } from './worker';
@@ -112,7 +111,7 @@ export class RemaxVantRocket {
 
       stdin.setRawMode(true);
       stdin.resume();
-      stdin.on('data', (data: Buffer) => this.interact(data));
+      stdin.on('data', this.interact);
     });
 
     // 退出程序
@@ -198,7 +197,7 @@ export class RemaxVantRocket {
   }
 
   // 交互模式
-  interact(data: Buffer) {
+  interact = (data: Buffer) => {
     const input = String(data);
     const key = input.toUpperCase();
     // detect SIGINT in raw mode https://github.com/vadimdemedes/ink/blob/master/src/hooks/use-input.ts
@@ -219,7 +218,7 @@ export class RemaxVantRocket {
       default:
         break;
     }
-  }
+  };
 
   build() {
     const { target, analyze, notify } = this.options;
@@ -230,27 +229,29 @@ export class RemaxVantRocket {
       watch: true,
     });
 
-    compiler.hooks.afterEmit.tap(
-      'PruneHarmfulPages',
-      (compilation: _compilation.Compilation) => {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        const asset = compilation.getAsset('app.json') as Asset;
-        const manifest = readJSONSync(asset.source.existsAt) as Manifest;
-        const pages = manifest.pages.map((pagepath) => pagepath.split('/')[1]);
-        // 输出 pages 目录
-        const outputPath = compiler.options.output?.path as string;
-        const directories = readdirSync(path.resolve(outputPath, './pages'));
+    compiler.hooks.watchRun.tap('RemaxVantInteract', () => {
+      this.eventEmitter.emit(RocketAction.Pristine);
+    });
 
-        directories
-          .filter((dirname) => !pages.includes(dirname))
-          .forEach((dirname) => {
-            cleanup(outputPath, dirname);
-          });
+    compiler.hooks.done.tap('PruneHarmfulPages', () => {
+      // compilation may not include app.json, weired
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const asset = path.resolve(compiler.options.output?.path, 'app.json');
+      const manifest = readJSONSync(asset) as Manifest;
+      const pages = manifest.pages.map((pagepath) => pagepath.split('/')[1]);
+      // 输出 pages 目录
+      const outputPath = compiler.options.output?.path as string;
+      const directories = readdirSync(path.resolve(outputPath, './pages'));
 
-        // 回传信号
-        this.eventEmitter.emit(RocketAction.TakeOver);
-      }
-    );
+      directories
+        .filter((dirname) => !pages.includes(dirname))
+        .forEach((dirname) => {
+          cleanup(outputPath, dirname);
+        });
+
+      // 回传信号
+      this.eventEmitter.emit(RocketAction.TakeOver);
+    });
   }
 }
