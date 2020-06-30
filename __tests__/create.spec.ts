@@ -1,5 +1,5 @@
 // internal
-import { render, RenderType } from '../lib/create';
+import { render, RenderType } from '../src/lib/create';
 
 describe('create new component', () => {
   it('should render default export', () => {
