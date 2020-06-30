@@ -10,6 +10,7 @@ import Table from 'cli-table3';
 import { stdin } from 'process';
 import * as cursor from 'cli-cursor';
 // internal
+import { create } from '../create';
 import { guard } from '../tools/guard';
 import { cleanup } from './worker';
 import { Pages } from './constant';
@@ -167,6 +168,36 @@ export class RemaxVantRocket {
   handleCreateCommand() {
     // 退出交互模式
     this.eventEmitter.emit(RocketAction.Pristine);
+
+    const questions: PromptObjectFix[] = [
+      {
+        type: 'text',
+        name: 'name',
+        message: `what's the package name?`,
+        validate: (name) =>
+          /^([a-z]+-?)+[a-z]+$/.test(name) ||
+          'name should match kebab case with full lowercase letters',
+      },
+      {
+        type: 'toggle',
+        name: 'ignorePage',
+        initial: false,
+        message: 'would you like to ignore page creation?',
+        active: 'yes',
+        inactive: 'no',
+      },
+    ];
+
+    prompts(questions).then((answers: Answers<'name' | 'ignorePage'>) => {
+      // SIGINT 特殊处理
+      if (typeof answers.name === 'string' && typeof answers.ignorePage === 'boolean') {
+        // 同步模式创建组件
+        create(answers.name, { ignorePage: answers.ignorePage });
+
+        // 恢复交互模式
+        this.eventEmitter.emit(RocketAction.TakeOver);
+      }
+    });
   }
 
   // disable rule, keep command handler consistance

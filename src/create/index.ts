@@ -38,20 +38,20 @@ export const render: RenderAbstract = (type, name, options) => {
 
 // eslint-disable-next-line import/prefer-default-export
 export function create(component: string, options: CreateCommandOptions): void {
-  const directory = process.cwd();
+  const project = process.cwd();
 
   const name = pascalCase(component);
   const files = [
     {
-      filename: path.resolve(directory, `packages/${name}/index.ts`),
+      filename: path.resolve(project, `packages/${name}/index.ts`),
       content: render(RenderType.INDEX, name),
     },
     {
-      filename: path.resolve(directory, `packages/${name}/${name}.tsx`),
+      filename: path.resolve(project, `packages/${name}/${name}.tsx`),
       content: render(RenderType.COMPONENT, name),
     },
     {
-      filename: path.resolve(directory, `packages/${name}/${name}.css`),
+      filename: path.resolve(project, `packages/${name}/${name}.css`),
       content: '',
     },
   ];
@@ -59,21 +59,17 @@ export function create(component: string, options: CreateCommandOptions): void {
   // several component without page preview
   if (!options.ignorePage) {
     files.push({
-      filename: path.resolve(directory, `storyboard/pages/${component}/index.tsx`),
+      filename: path.resolve(project, `storyboard/pages/${component}/index.tsx`),
       content: render(RenderType.PAGE, name, options),
     });
   }
 
   files.forEach((item) => {
-    fs.ensureFile(item.filename).then(() => {
-      // eslint-disable-next-line no-console
-      console.log(
-        ' ',
-        get('tada'),
-        chalk.cyan(path.relative(process.cwd(), item.filename))
-      );
+    fs.ensureFileSync(item.filename);
 
-      fs.writeFileSync(item.filename, item.content);
-    });
+    // eslint-disable-next-line no-console
+    console.log(' ', get('tada'), chalk.cyan(path.relative(project, item.filename)));
+
+    fs.writeFileSync(item.filename, item.content);
   });
 }
