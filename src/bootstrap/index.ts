@@ -2,46 +2,23 @@
 import path from 'path';
 import chalk from 'chalk';
 import { buildApp } from 'remax/build';
-import { Platform } from '@remax/types';
-import prompts, { PromptObject, Answers } from 'prompts';
+import prompts, { Answers } from 'prompts';
 import { readdirSync, readFileSync, readJSONSync, writeFileSync } from 'fs-extra';
 import { get } from 'node-emoji';
 import { EventEmitter } from 'events';
+import Table from 'cli-table3';
 import { stdin } from 'process';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import * as cursor from 'cli-cursor';
 // internal
+import { guard } from '../tools/guard';
 import { cleanup } from './worker';
 import { Pages } from './constant';
-
-interface PromptObjectFix extends PromptObject {
-  instructions?: boolean;
-  optionsPerPage?: number;
-}
-
-interface BoostrapCommandState {
-  initial: string;
-  persistance: string[];
-}
-
-export interface BootstrapCommandArgs {
-  // 平行移植 remax build
-  target: Platform;
-  notify: boolean;
-  analyze: boolean;
-  // 新增，配置文件模板地址
-  templateFile: string;
-}
-
-interface Manifest {
-  pages: string[];
-}
-
-interface Asset {
-  source: {
-    existsAt: string;
-  };
-}
+import {
+  BoostrapCommandState,
+  Manifest,
+  BootstrapCommandArgs,
+  PromptObjectFix,
+} from './interface';
 
 // scope
 const project = process.cwd();
@@ -56,16 +33,20 @@ enum RocketAction {
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types, no-console */
 
-// raw mode, 类似 keypress 监听模式
 export class RemaxVantRocket {
+  // cli 传递参数
   private options: BootstrapCommandArgs;
 
+  // 内部管理状态
   private state: BoostrapCommandState;
 
   // 分发事件
   private eventEmitter: EventEmitter;
 
   static bootstrap(options: BootstrapCommandArgs): void {
+    // 保证 remant 仅在 remax-vant 目录内执行
+    guard(process.cwd());
+
     (Reflect.construct(RemaxVantRocket, [options]) as RemaxVantRocket).interact(
       Buffer.from('P')
     );
@@ -81,10 +62,10 @@ export class RemaxVantRocket {
     this.eventEmitter = new EventEmitter();
 
     // 激活构建
-    this.eventEmitter.once(RocketAction.Watch, () => this.build());
+    this.eventEmitter.once(RocketAction.Watch, this.build);
 
     // 渲染配置文件
-    this.eventEmitter.on(RocketAction.Render, () => this.render());
+    this.eventEmitter.on(RocketAction.Render, this.render);
 
     // 退出交互模式
     this.eventEmitter.on(RocketAction.Pristine, () => {
@@ -97,33 +78,38 @@ export class RemaxVantRocket {
       stdin.off('data', this.interact);
     });
 
-    // 进入交互模式
+    // raw mode, 类似 keypress 监听模式
+    // 进入交互模式，
     this.eventEmitter.on(RocketAction.TakeOver, () => {
-      const commands = [
-        `\n${get('ghost')} ${chalk.cyan(' Remant Usage:')}\n`,
-        `${get('zany_face')} Press ${chalk.magenta('P')} to list pages concerned`,
-        `${get('heart_eyes')} Press ${chalk.magenta('F')} to mark initial page`,
-        `${get('beer')} Press ${chalk.magenta('Q')} to quick focus board`,
-      ];
       // 隐藏光标
       cursor.hide();
-      console.log(commands.join('\n'));
 
+      // output avaiable command
+      const table = new Table({
+        head: ['Letter', 'Description'],
+      });
+
+      table.push(
+        [chalk.magenta('P'), 'select pages concerned from storyboard'],
+        [chalk.magenta('F'), 'select initial page from concerned pages'],
+        [chalk.magenta('C'), 'create new remax vant package'],
+        [chalk.magenta('Q'), 'quit bootstrap dashboard just now']
+      );
+
+      console.log();
+      console.log(`${get('ghost')} ${chalk.cyan(' Remant Usage:')}`);
+      console.log();
+      console.log(table.toString());
+
+      // 恢复交互模式
       stdin.setRawMode(true);
       stdin.resume();
       stdin.on('data', this.interact);
     });
-
-    // 退出程序
-    this.eventEmitter.on(RocketAction.Exit, () => {
-      console.clear();
-      console.log(` ${get('rocket')} Goodbye, expect to see you again, dear friend`);
-      process.exit();
-    });
   }
 
   handlePickActiveCommand() {
-    // 触发事件
+    // 退出交互模式
     this.eventEmitter.emit(RocketAction.Pristine);
 
     const question: PromptObjectFix = {
@@ -142,14 +128,18 @@ export class RemaxVantRocket {
     };
 
     prompts(question).then((answers: Answers<'pages'>) => {
-      // preserve choices
-      this.state.persistance = answers.pages as string[];
-      this.eventEmitter.emit(RocketAction.Render);
+      //  SIGINT pages 空数组
+      if (Array.isArray(answers.pages)) {
+        // 持久化结果
+        this.state.persistance = answers.pages;
+        // 修改 app.config.ts
+        this.eventEmitter.emit(RocketAction.Render);
+      }
     });
   }
 
   handlePickInitialCommand() {
-    // 触发事件
+    // 退出交互模式
     this.eventEmitter.emit(RocketAction.Pristine);
 
     const question: PromptObjectFix = {
@@ -165,12 +155,29 @@ export class RemaxVantRocket {
 
     prompts(question).then((answers: Answers<'initial'>) => {
       // preserve choices
-      this.state.initial = answers.initial;
+      const initial = answers.initial as string;
+
+      // 持久化结果
+      this.state.initial = initial;
+      // 修改 app.config.ts
       this.eventEmitter.emit(RocketAction.Render);
     });
   }
 
-  render() {
+  handleCreateCommand() {
+    // 退出交互模式
+    this.eventEmitter.emit(RocketAction.Pristine);
+  }
+
+  // disable rule, keep command handler consistance
+  // eslint-disable-next-line class-methods-use-this
+  handleExitCommand() {
+    console.clear();
+    console.log(` ${get('rocket')} Goodbye, expect to see you again, dear friend`);
+    process.exit();
+  }
+
+  render = () => {
     const templateFile = path.resolve(project, this.options.templateFile);
     const template = readFileSync(templateFile, 'utf-8');
     const destiny = path.resolve(path.dirname(templateFile), './app.config.ts');
@@ -192,9 +199,9 @@ export class RemaxVantRocket {
 
     // 构建前清理 log
     console.clear();
-    // 多次触发，监听函数仅执行一次
+    // 多次触发，监听函数仅执行一次，app.config.ts 改动后，自动进入
     this.eventEmitter.emit(RocketAction.Watch);
-  }
+  };
 
   // 交互模式
   interact = (data: Buffer) => {
@@ -212,15 +219,18 @@ export class RemaxVantRocket {
       case 'F':
         this.handlePickInitialCommand();
         break;
+      case 'C':
+        this.handleCreateCommand();
+        break;
       case 'Q':
-        this.eventEmitter.emit(RocketAction.Exit);
+        this.handleExitCommand();
         break;
       default:
         break;
     }
   };
 
-  build() {
+  build = () => {
     const { target, analyze, notify } = this.options;
     const compiler = buildApp({
       target,
@@ -229,19 +239,19 @@ export class RemaxVantRocket {
       watch: true,
     });
 
+    // watch compile 时退出交互模式
     compiler.hooks.watchRun.tap('RemaxVantInteract', () => {
       this.eventEmitter.emit(RocketAction.Pristine);
     });
 
-    compiler.hooks.done.tap('PruneHarmfulPages', () => {
-      // compilation may not include app.json, weired
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const asset = path.resolve(compiler.options.output?.path, 'app.json');
+    // pages 列表变化，前次构建页面导致应用奔溃，原因不明，暂且删除处理
+    compiler.hooks.done.tap('RemaxVantPruneHarmful', () => {
+      // compilation may not include app.json, weired, read from output directory
+      const outputPath = compiler.options.output?.path as string;
+      const asset = path.resolve(outputPath, 'app.json');
       const manifest = readJSONSync(asset) as Manifest;
       const pages = manifest.pages.map((pagepath) => pagepath.split('/')[1]);
       // 输出 pages 目录
-      const outputPath = compiler.options.output?.path as string;
       const directories = readdirSync(path.resolve(outputPath, './pages'));
 
       directories
@@ -250,8 +260,8 @@ export class RemaxVantRocket {
           cleanup(outputPath, dirname);
         });
 
-      // 回传信号
+      // watch compile done 进入交互模式
       this.eventEmitter.emit(RocketAction.TakeOver);
     });
-  }
+  };
 }

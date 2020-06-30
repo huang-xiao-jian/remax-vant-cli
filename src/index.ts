@@ -1,9 +1,9 @@
 // packages
 import { program } from 'commander';
 // internal
-import { guard } from './tools/guard';
 import { create, CreateCommandOptions } from './create';
-import { RemaxVantRocket, BootstrapCommandArgs } from './bootstrap';
+import { RemaxVantRocket } from './bootstrap';
+import { BootstrapCommandArgs } from './bootstrap/interface';
 
 program
   .command('create <component>')
@@ -28,9 +28,6 @@ program
   .requiredOption('-f, --template-file <filepath>', '配置文件模板')
   .description('take care pages only concerned about')
   .action((argv: BootstrapCommandArgs) => {
-    // 保证 remant 仅在 remax-vant 目录内执行
-    guard(process.cwd());
-
     RemaxVantRocket.bootstrap(argv);
   });
 

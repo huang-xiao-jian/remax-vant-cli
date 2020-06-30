@@ -29,6 +29,7 @@
     "camelcase": "^6.0.0",
     "chalk": "^4.0.0",
     "cli-cursor": "^3.1.0",
+    "cli-table3": "^0.6.0",
     "commander": "^5.1.0",
     "fs-extra": "^9.0.0",
     "handlebars": "^4.7.6",
