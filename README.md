@@ -15,9 +15,9 @@ Options:
   -h, --help         display help for command
 ```
 
-## 快捷选择页面
+## 快速启动
 
-仅预设开发模式，不应使用与标准构建模式。
+仅预设开发模式，其他环境切勿使用。
 
 ```bash
 Usage: remant bootstrap [options]
@@ -31,3 +31,15 @@ Options:
   -f, --template-file <filepath>  配置文件模板
   -h, --help                      display help for command
 ```
+
+运行效果：
+
+[![asciicast](https://asciinema.org/a/344422.svg)](https://asciinema.org/a/344422)
+
+## 流程说明
+
+![remax-vant-cli](https://user-images.githubusercontent.com/4002210/86196437-df52a000-bb85-11ea-8e75-d674522c995a.jpg)
+
+## Licence
+
+MIT
